@@ -71,7 +71,7 @@ public class GeoFencingActivity extends AppCompatActivity implements GeoFenceHel
             if (connectionResult.hasResolution()) {
                 try {
                     connectionResult.startResolutionForResult(this,
-                            geoFenceHelper.CONNECTION_FAILURE_RESOLUTION_REQUEST);
+                            GeoFenceHelper.CONNECTION_FAILURE_RESOLUTION_REQUEST);
                 } catch (IntentSender.SendIntentException e) {
 
                 }

@@ -1,29 +1,24 @@
 package com.reeuse.location;
 
 import android.Manifest;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.Status;
 import com.reeuse.location.location.LocationHelper;
-import com.reeuse.location.location.LocationUpdateService;
 
 /**
  * LocationActivity.java
- *
+ * <p/>
  * To fetch the location of the user in foreground use this approach.
  */
 public class LocationActivity extends AppCompatActivity implements LocationHelper.OnLocationCompleteListener {
@@ -99,15 +94,15 @@ public class LocationActivity extends AppCompatActivity implements LocationHelpe
             if (connectionResult.hasResolution()) {
                 try {
                     connectionResult.startResolutionForResult(this,
-                            locationHelper.CONNECTION_FAILURE_RESOLUTION_REQUEST);
+                            LocationHelper.CONNECTION_FAILURE_RESOLUTION_REQUEST);
                 } catch (IntentSender.SendIntentException e) {
-
+                    e.printStackTrace();
                 }
             }
         } else if (status != null) {
             // Location is not available, but we can ask permission from users
             try {
-                status.startResolutionForResult(this, locationHelper.REQUEST_CHECK_SETTINGS);
+                status.startResolutionForResult(this, LocationHelper.REQUEST_CHECK_SETTINGS);
             } catch (IntentSender.SendIntentException e) {
                 e.printStackTrace();
             }
