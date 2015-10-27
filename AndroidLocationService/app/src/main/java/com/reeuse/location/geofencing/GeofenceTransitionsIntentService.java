@@ -45,12 +45,14 @@ public class GeofenceTransitionsIntentService extends IntentService {
         } else {
             int transitionType = geoFenceEvent.getGeofenceTransition();
             List<Geofence> geofenceList = geoFenceEvent.getTriggeringGeofences();
-            String triggeredGeoFenceId = geofenceList.get(0).getRequestId();
-            if (Geofence.GEOFENCE_TRANSITION_ENTER == transitionType) {
-                sendNotification("Enter:: "+triggeredGeoFenceId);
+            for (Geofence geofence : geofenceList) {
+                String triggeredGeoFenceId = geofence.getRequestId();
+                if (Geofence.GEOFENCE_TRANSITION_ENTER == transitionType) {
+                    sendNotification("Enter:: " + triggeredGeoFenceId);
 
-            } else if (Geofence.GEOFENCE_TRANSITION_EXIT == transitionType) {
-                sendNotification("Exit:: "+triggeredGeoFenceId);
+                } else if (Geofence.GEOFENCE_TRANSITION_EXIT == transitionType) {
+                    sendNotification("Exit:: " + triggeredGeoFenceId);
+                }
             }
         }
     }
