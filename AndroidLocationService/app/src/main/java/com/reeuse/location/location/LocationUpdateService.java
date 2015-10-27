@@ -1,4 +1,4 @@
-package com.reeuse.location;
+package com.reeuse.location.location;
 
 import android.app.Service;
 import android.content.Intent;
@@ -10,17 +10,14 @@ import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsResult;
 
-public class LocationUpdateService extends Service  implements
+public class LocationUpdateService extends Service implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
-        LocationListener{
+        LocationListener {
 
     public static final String TAG = LocationUpdateService.class.getSimpleName();
     private final IBinder binder = new LocalBinder();
@@ -43,8 +40,8 @@ public class LocationUpdateService extends Service  implements
      */
     protected LocationRequest mLocationRequest;
 
-     String latitude = "0.0";
-     String longitude="0.0";
+    public double latitude = 0.0;
+    public double longitude = 0.0;
 
     @Override
     public void onCreate() {
@@ -61,10 +58,11 @@ public class LocationUpdateService extends Service  implements
     public void onDestroy() {
         super.onDestroy();
     }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(mGoogleApiClient!=null)
-        mGoogleApiClient.connect();
+        if (mGoogleApiClient != null)
+            mGoogleApiClient.connect();
         createLocationRequest();
         return START_STICKY;
     }
@@ -81,6 +79,7 @@ public class LocationUpdateService extends Service  implements
                 .addApi(LocationServices.API)
                 .build();
     }
+
     /**
      * Sets up the location request. Android has two location request settings:
      * {@code ACCESS_COARSE_LOCATION} and {@code ACCESS_FINE_LOCATION}. These settings control
@@ -123,33 +122,33 @@ public class LocationUpdateService extends Service  implements
 
     @Override
     public IBinder onBind(Intent intent) {
-       return binder;
+        return binder;
     }
 
 
     @Override
     public void onConnected(Bundle bundle) {
-        Log.i(TAG,"onConnected");
+        Log.i(TAG, "onConnected");
         startLocationUpdates();
     }
 
     @Override
     public void onConnectionSuspended(int i) {
-        Log.i(TAG,"onConnectionSuspended");
+        Log.i(TAG, "onConnectionSuspended");
     }
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.i(TAG,location.getProvider());
-        Log.i(TAG,"Latitude :"+location.getLatitude());
-        Log.i(TAG,"Longitude :"+location.getLongitude());
-        latitude = location.getLatitude()+"";
-        longitude = location.getLongitude()+"";
+        Log.i(TAG, location.getProvider());
+        Log.i(TAG, "Latitude :" + location.getLatitude());
+        Log.i(TAG, "Longitude :" + location.getLongitude());
+        latitude = location.getLatitude();
+        longitude = location.getLongitude();
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
-        Log.i(TAG,"onConnectionFailed");
+        Log.i(TAG, "onConnectionFailed");
     }
 
     /**
