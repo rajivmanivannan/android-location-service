@@ -4,5 +4,6 @@
     <string name="latitude_label">Latitude: </string>
     <string name="longitude_label">Longitude: </string>
     <string name="get_updates">Get Update</string>
+    <string name="title_activity_main">MainActivity</string>
 
 </resources>
