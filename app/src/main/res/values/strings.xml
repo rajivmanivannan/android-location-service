@@ -1,0 +1,14 @@
+<resources>
+  <string name="app_name">Android Location Service</string>
+  <string name="action_settings">Settings</string>
+  <string name="latitude_label">Latitude: </string>
+  <string name="longitude_label">Longitude: </string>
+  <string name="get_updates">Get Update</string>
+  <string name="title_activity_main">MainActivity</string>
+  <string name="default_notification_channel_id">default</string>
+
+  <string name="go_to_geo_fencing">Geo-Fencing</string>
+  <string name="go_to_fetch_location_in_fore_ground">Fetch Location in Foreground</string>
+  <string name="go_to_fetch_location_in_back_ground">Fetch Location in Background</string>
+
+</resources>
