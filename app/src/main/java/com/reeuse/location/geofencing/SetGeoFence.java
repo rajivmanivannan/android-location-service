@@ -11,9 +11,9 @@ package com.reeuse.location.geofencing;
 import com.google.android.gms.location.Geofence;
 
 /**
- * SetGeofence.java
+ * SetGeoFence.java
  */
-public class SetGeofence {
+public class SetGeoFence {
 
     // Instance variables
     private final String mId;
@@ -24,17 +24,17 @@ public class SetGeofence {
     private int mTransitionType;
 
     /**
-     * @param geofenceId The Geofence's request ID.
+     * @param geoFenceId The Geofence's request ID.
      * @param latitude   Latitude of the Geofence's center in degrees.
      * @param longitude  Longitude of the Geofence's center in degrees.
      * @param radius     Radius of the geofence circle in meters.
      * @param expiration Geofence expiration duration.
      * @param transition Type of Geofence transition.
      */
-    public SetGeofence(String geofenceId, double latitude, double longitude, float radius,
+    public SetGeoFence(String geoFenceId, double latitude, double longitude, float radius,
                        long expiration, int transition) {
         // Set the instance fields from the constructor.
-        this.mId = geofenceId;
+        this.mId = geoFenceId;
         this.mLatitude = latitude;
         this.mLongitude = longitude;
         this.mRadius = radius;
@@ -72,8 +72,8 @@ public class SetGeofence {
      *
      * @return A Geofence object.
      */
-    public Geofence toGeofence() {
-        // Build a new Geofence object.
+    public Geofence toGeoFence() {
+        // Build a new GeoFence object.
         return new Geofence.Builder()
                 .setRequestId(mId)
                 .setTransitionTypes(mTransitionType)

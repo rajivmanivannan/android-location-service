@@ -17,14 +17,14 @@ import com.reeuse.location.R;
 import java.util.List;
 
 /**
- * GeofenceTransitionsIntentService.java
+ * GeoFenceTransitionsIntentService.java
  */
-public class GeofenceTransitionsIntentService extends IntentService {
+public class GeoFenceTransitionsIntentService extends IntentService {
 
-  protected static final String TAG = GeofenceTransitionsIntentService.class.getSimpleName();
+  protected static final String TAG = GeoFenceTransitionsIntentService.class.getSimpleName();
 
-  public GeofenceTransitionsIntentService() {
-    super(GeofenceTransitionsIntentService.class.getSimpleName());
+  public GeoFenceTransitionsIntentService() {
+    super(GeoFenceTransitionsIntentService.class.getSimpleName());
   }
 
   /**
@@ -41,9 +41,9 @@ public class GeofenceTransitionsIntentService extends IntentService {
       Log.e(TAG, "Location Services error: " + errorCode);
     } else {
       int transitionType = geoFenceEvent.getGeofenceTransition();
-      List<Geofence> geofenceList = geoFenceEvent.getTriggeringGeofences();
-      for (Geofence geofence : geofenceList) {
-        String triggeredGeoFenceId = geofence.getRequestId();
+      List<Geofence> geoFenceList = geoFenceEvent.getTriggeringGeofences();
+      for (Geofence geoFence : geoFenceList) {
+        String triggeredGeoFenceId = geoFence.getRequestId();
         if (Geofence.GEOFENCE_TRANSITION_ENTER == transitionType) {
           sendNotification("Enter:: " + triggeredGeoFenceId);
         } else if (Geofence.GEOFENCE_TRANSITION_EXIT == transitionType) {

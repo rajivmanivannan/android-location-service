@@ -6,15 +6,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.os.Bundle;
 import android.os.Looper;
-import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResolvableApiException;
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
@@ -26,19 +23,15 @@ import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
-import static com.google.android.gms.location.LocationServices.API;
-import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
-
 /**
  * LocationHelper.java
  */
-public class LocationHelper
-    implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
-    LocationListener {
+public class LocationHelper implements LocationListener {
   /**
    * Constant used in the location settings dialog.
    */
   public static final int REQUEST_CHECK_SETTINGS = 0x6;
+  private static final String TAG = LocationHelper.class.getSimpleName();
   /**
    * The desired interval for location updates. Inexact. Updates may be more or less frequent.
    */
@@ -49,20 +42,21 @@ public class LocationHelper
    */
   private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
       UPDATE_INTERVAL_IN_MILLISECONDS / 2;
-  private static final String TAG = LocationHelper.class.getSimpleName();
 
   /**
-   * Stores parameters for requests to the FusedLocationProviderApi.
+   * Stores parameters for requests to the FusedLocationProviderClientApi.
    */
   private LocationRequest mLocationRequest;
   private LocationCallback mLocationCallback;
   private Context context;
   private OnLocationCompleteListener onLocationCompleteListener;
+  private FusedLocationProviderClient fusedLocationProviderClient;
 
   public LocationHelper(Context context,
       final OnLocationCompleteListener onLocationCompleteListener) {
     this.context = context;
     this.onLocationCompleteListener = onLocationCompleteListener;
+    fusedLocationProviderClient = new FusedLocationProviderClient(context);
     mLocationCallback = new LocationCallback() {
       @Override
       public void onLocationResult(LocationResult locationResult) {
@@ -74,20 +68,6 @@ public class LocationHelper
         }
       }
     };
-    buildGoogleApiClient();
-  }
-
-  /**
-   * Builds a GoogleApiClient. Uses the {@code #addApi} method to request the
-   * LocationServices API.
-   */
-  private synchronized void buildGoogleApiClient() {
-    GoogleApiClient mGoogleApiClient = new GoogleApiClient.Builder(context)
-        .addConnectionCallbacks(this)
-        .addOnConnectionFailedListener(this)
-        .addApi(API)
-        .build();
-    mGoogleApiClient.connect();
     checkLocationSettings();
     createLocationRequest();
   }
@@ -121,37 +101,25 @@ public class LocationHelper
   }
 
   /**
-   * Requests location updates from the FusedLocationApi.
+   * Requests location updates from the FusedLocationProviderClient.
    */
-  private void startLocationUpdates() {
+  public void startLocationUpdates() {
     if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
         == PackageManager.PERMISSION_GRANTED) {
-      getFusedLocationProviderClient(context).requestLocationUpdates(mLocationRequest,
+      fusedLocationProviderClient.requestLocationUpdates(mLocationRequest,
           mLocationCallback,
           Looper.myLooper());
     }
   }
 
   /**
-   * Removes location updates from the FusedLocationApi.
+   * Removes location updates from the FusedLocationProviderClient.
    */
   public void stopLocationUpdates() {
     // It is a good practice to remove location requests when the activity is in a paused or
     // stopped state. Doing so helps battery performance and is especially
     // recommended in applications that request frequent location updates.
-    LocationServices.getFusedLocationProviderClient(context)
-        .removeLocationUpdates(mLocationCallback);
-  }
-
-  @Override
-  public void onConnected(Bundle bundle) {
-    startLocationUpdates();
-  }
-
-  @Override
-  public void onConnectionSuspended(int i) {
-    //Retry
-    buildGoogleApiClient();
+    fusedLocationProviderClient.removeLocationUpdates(mLocationCallback);
   }
 
   @Override
@@ -159,18 +127,11 @@ public class LocationHelper
     onLocationCompleteListener.getLocationUpdate(location);
   }
 
-  @Override
-  public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-    onLocationCompleteListener.onError(null, connectionResult.getErrorMessage());
-  }
-
   private void checkLocationSettings() {
-
     LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
         .addLocationRequest(new LocationRequest());
     Task<LocationSettingsResponse> result =
         LocationServices.getSettingsClient(context).checkLocationSettings(builder.build());
-
     result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
       @Override
       public void onComplete(Task<LocationSettingsResponse> task) {

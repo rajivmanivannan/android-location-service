@@ -14,7 +14,7 @@
         android:screenOrientation="portrait"/>
 
     <service
-        android:name=".geofencing.GeofenceTransitionsIntentService"
+        android:name=".geofencing.GeoFenceTransitionsIntentService"
         android:exported="false"/>
     <service
         android:name=".location.LocationUpdateService"

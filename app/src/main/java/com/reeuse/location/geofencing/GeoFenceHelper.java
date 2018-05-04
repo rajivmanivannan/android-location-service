@@ -1,78 +1,119 @@
 package com.reeuse.location.geofencing;
 
+import android.Manifest;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
+import android.content.pm.PackageManager;
+import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingClient;
+import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import java.util.List;
 
 /**
  * GeoFenceHelper.java
  */
-public class GeoFenceHelper implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener {
-    // Request code to attempt to resolve Google Play services connection failures.
-    public final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
-    private Context context;
-    private GoogleApiClient mGoogleApiClient;
-    private PendingIntent geofenceRequestIntent;
-    private OnGeofencePreparedListener onGeofencePreparedListener;
+public class GeoFenceHelper {
+  private Context context;
+  private GeofencingClient geofencingClient;
+  private GeofencingRequest.Builder builder;
+  private PendingIntent geoFenceRequestIntent;
+  private GeoFenceStatusListener geoFenceStatusListener;
 
-    public interface OnGeofencePreparedListener {
+  public GeoFenceHelper(Context context, GeoFenceStatusListener geoFenceStatusListener) {
+    this.context = context;
+    this.geoFenceStatusListener = geoFenceStatusListener;
+    geofencingClient = LocationServices.getGeofencingClient(context);
+    geoFenceRequestIntent = getGeoFenceTransitionPendingIntent();
+    builder = new GeofencingRequest.Builder();
+  }
 
-        void onSuccess(GoogleApiClient googleApiClient, PendingIntent pendingIntent);
-
-        void onError(ConnectionResult connectionResult, String error);
-
+  public void setGeoFencingTriggerOnEnter(List<Geofence> geoFenceList) {
+    builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
+    builder.addGeofences(geoFenceList);
+    builder.build();
+    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+        == PackageManager.PERMISSION_GRANTED) {
+      geofencingClient.addGeofences(builder.build(), geoFenceRequestIntent)
+          .addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override public void onSuccess(Void aVoid) {
+              if (geoFenceStatusListener != null) {
+                geoFenceStatusListener.addedSuccessfully();
+              }
+            }
+          })
+          .addOnFailureListener(new OnFailureListener() {
+            @Override public void onFailure(@NonNull Exception e) {
+              if (geoFenceStatusListener != null) {
+                geoFenceStatusListener.onAddFail(e);
+              }
+            }
+          });
     }
+  }
 
-    public GeoFenceHelper(Context context, OnGeofencePreparedListener onGeofencePreparedListener) {
-        this.context = context;
-        this.onGeofencePreparedListener = onGeofencePreparedListener;
-        buildGoogleApiClient();
+  public void setGeoFencingTriggerOnExit(List<Geofence> geoFenceList) {
+    builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_EXIT);
+    builder.addGeofences(geoFenceList);
+    if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+        == PackageManager.PERMISSION_GRANTED) {
+      geofencingClient.addGeofences(builder.build(), geoFenceRequestIntent)
+          .addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override public void onSuccess(Void aVoid) {
+              if (geoFenceStatusListener != null) {
+                geoFenceStatusListener.addedSuccessfully();
+              }
+            }
+          })
+          .addOnFailureListener(new OnFailureListener() {
+            @Override public void onFailure(@NonNull Exception e) {
+              if (geoFenceStatusListener != null) {
+                geoFenceStatusListener.onAddFail(e);
+              }
+            }
+          });
     }
+  }
 
-    /**
-     * Builds a GoogleApiClient. Uses the {@code #addApi} method to request the
-     * LocationServices API.
-     */
-    protected synchronized void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(context)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-        mGoogleApiClient.connect();
-    }
+  public void removeGeoFencing() {
+    geofencingClient.removeGeofences(geoFenceRequestIntent)
+        .addOnSuccessListener(new OnSuccessListener<Void>() {
+          @Override public void onSuccess(Void aVoid) {
+            if (geoFenceStatusListener != null) {
+              geoFenceStatusListener.removedSuccessfully();
+            }
+          }
+        })
+        .addOnFailureListener(new OnFailureListener() {
+          @Override public void onFailure(@NonNull Exception e) {
+            if (geoFenceStatusListener != null) {
+              geoFenceStatusListener.onRemoveFailure(e);
+            }
+          }
+        });
+  }
 
-    @Override
-    public void onConnected(Bundle bundle) {
-        geofenceRequestIntent = getGeofenceTransitionPendingIntent();
-        onGeofencePreparedListener.onSuccess(mGoogleApiClient, geofenceRequestIntent);
-    }
+  /**
+   * Create a PendingIntent that triggers GeofenceTransitionIntentService when a geofence
+   * transition occurs.
+   */
+  private PendingIntent getGeoFenceTransitionPendingIntent() {
+    Intent intent = new Intent(context, GeoFenceTransitionsIntentService.class);
+    return PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+  }
 
-    @Override
-    public void onConnectionSuspended(int i) {
-        if (geofenceRequestIntent != null)
-            LocationServices.getGeofencingClient(context).removeGeofences(geofenceRequestIntent);
-        onGeofencePreparedListener.onError(null, "onConnectionSuspended");
-    }
+  public interface GeoFenceStatusListener {
+    void addedSuccessfully();
 
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        onGeofencePreparedListener.onError(connectionResult, null);
-    }
+    void removedSuccessfully();
 
+    void onAddFail(Exception exception);
 
-    /**
-     * Create a PendingIntent that triggers GeofenceTransitionIntentService when a geofence
-     * transition occurs.
-     */
-    private PendingIntent getGeofenceTransitionPendingIntent() {
-        Intent intent = new Intent(context, GeofenceTransitionsIntentService.class);
-        return PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    }
+    void onRemoveFailure(Exception exception);
+  }
 }

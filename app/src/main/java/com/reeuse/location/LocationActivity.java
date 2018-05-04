@@ -33,8 +33,8 @@ public class LocationActivity extends AppCompatActivity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_location);
 
-    latitude = (TextView) findViewById(R.id.latitude_value_label);
-    longitude = (TextView) findViewById(R.id.longitude_value_label);
+    latitude = findViewById(R.id.latitude_value_label);
+    longitude = findViewById(R.id.longitude_value_label);
 
     int hasGetLocationPermission = ActivityCompat.checkSelfPermission(LocationActivity.this,
         Manifest.permission.ACCESS_FINE_LOCATION);
@@ -42,8 +42,13 @@ public class LocationActivity extends AppCompatActivity
       ActivityCompat.requestPermissions(LocationActivity.this,
           new String[] { Manifest.permission.ACCESS_FINE_LOCATION }, REQUEST_CODE_ASK_PERMISSIONS);
     } else {
-      locationHelper = new LocationHelper(LocationActivity.this, this);
+      initializeLocationHelper();
     }
+  }
+
+  private void initializeLocationHelper() {
+    locationHelper = new LocationHelper(this, this);
+    locationHelper.startLocationUpdates();
   }
 
   @Override
@@ -76,7 +81,7 @@ public class LocationActivity extends AppCompatActivity
     }
     if (grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
       // we have permission,
-      locationHelper = new LocationHelper(LocationActivity.this, this);
+      initializeLocationHelper();
     }
   }
 

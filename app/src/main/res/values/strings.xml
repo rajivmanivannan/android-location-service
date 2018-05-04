@@ -10,5 +10,16 @@
   <string name="go_to_geo_fencing">Geo-Fencing</string>
   <string name="go_to_fetch_location_in_fore_ground">Fetch Location in Foreground</string>
   <string name="go_to_fetch_location_in_back_ground">Fetch Location in Background</string>
+  <string name="latitude">Latitude</string>
+  <string name="longitude">Longitude</string>
+  <string name="radius_in_meter">Radius in meters</string>
+  <string name="set_geo_fence">Set Geo-Fence</string>
+  <string name="valid_latitude">Enter valid latitude value</string>
+  <string name="valid_longitude">Enter valid longitude value</string>
+  <string name="default_radius_is_set_as_100_meter_for_geo_fencing">Default radius is set as 100 meter for Geo-fencing</string>
+  <string name="geo_fencing_added_successfully">Geo-fencing added successfully</string>
+  <string name="geo_fencing_removed_successfully">Geo-fencing removed successfully</string>
+  <string name="geo_fencing_add_failed">Geo-fencing add failed</string>
+  <string name="geo_fencing_remove_failed">Geo-fencing remove failed</string>
 
 </resources>

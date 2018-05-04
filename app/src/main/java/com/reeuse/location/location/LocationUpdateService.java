@@ -14,18 +14,17 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.reeuse.location.geofencing.GeoFenceHelper;
 
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 
-public class LocationUpdateService extends Service implements
-    GoogleApiClient.ConnectionCallbacks,
-    GoogleApiClient.OnConnectionFailedListener,
-    LocationListener {
+public class LocationUpdateService extends Service implements LocationListener {
 
   public static final String TAG = LocationUpdateService.class.getSimpleName();
   /**
@@ -41,19 +40,18 @@ public class LocationUpdateService extends Service implements
   private final IBinder binder = new LocalBinder();
   public double latitude = 0.0;
   public double longitude = 0.0;
+
   /**
-   * Provides the entry point to Google Play services.
-   */
-  protected GoogleApiClient mGoogleApiClient;
-  /**
-   * Stores parameters for requests to the FusedLocationProviderApi.
+   * Stores parameters for requests to the FusedLocationProviderClient.
    */
   private LocationRequest mLocationRequest;
   private LocationCallback mLocationCallback;
+  private FusedLocationProviderClient fusedLocationProviderClient;
 
   @Override
   public void onCreate() {
     super.onCreate();
+    fusedLocationProviderClient = new FusedLocationProviderClient(this);
     mLocationCallback = new LocationCallback() {
       @Override
       public void onLocationResult(LocationResult locationResult) {
@@ -65,7 +63,7 @@ public class LocationUpdateService extends Service implements
         }
       }
     };
-    buildGoogleApiClient();
+
   }
 
   @Override
@@ -80,24 +78,9 @@ public class LocationUpdateService extends Service implements
 
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
-    if (mGoogleApiClient != null) {
-      mGoogleApiClient.connect();
-    }
     createLocationRequest();
+    startLocationUpdates();
     return START_STICKY;
-  }
-
-  /**
-   * Builds a GoogleApiClient. Uses the {@code #addApi} method to request the
-   * LocationServices API.
-   */
-  protected synchronized void buildGoogleApiClient() {
-    Log.i(TAG, "Building GoogleApiClient");
-    mGoogleApiClient = new GoogleApiClient.Builder(this)
-        .addConnectionCallbacks(this)
-        .addOnConnectionFailedListener(this)
-        .addApi(LocationServices.API)
-        .build();
   }
 
   /**
@@ -131,10 +114,10 @@ public class LocationUpdateService extends Service implements
   /**
    * Requests location updates from the FusedLocationApi.
    */
-  protected void startLocationUpdates() {
+  private void startLocationUpdates() {
     if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
         == PackageManager.PERMISSION_GRANTED) {
-      getFusedLocationProviderClient(this).requestLocationUpdates(mLocationRequest,
+      fusedLocationProviderClient.requestLocationUpdates(mLocationRequest,
           mLocationCallback,
           Looper.myLooper());
     }
@@ -146,24 +129,8 @@ public class LocationUpdateService extends Service implements
   }
 
   @Override
-  public void onConnected(Bundle bundle) {
-    Log.i(TAG, "onConnected");
-    startLocationUpdates();
-  }
-
-  @Override
-  public void onConnectionSuspended(int i) {
-    Log.i(TAG, "onConnectionSuspended");
-  }
-
-  @Override
   public void onLocationChanged(Location location) {
     updateLocation(location);
-  }
-
-  @Override
-  public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-    Log.i(TAG, "onConnectionFailed");
   }
 
   /**
@@ -173,8 +140,7 @@ public class LocationUpdateService extends Service implements
     // It is a good practice to remove location requests when the activity is in a paused or
     // stopped state. Doing so helps battery performance and is especially
     // recommended in applications that request frequent location updates.
-    LocationServices.getFusedLocationProviderClient(this)
-        .removeLocationUpdates(mLocationCallback);
+    fusedLocationProviderClient.removeLocationUpdates(mLocationCallback);
   }
 
   private void updateLocation(Location location) {

@@ -1,6 +1,7 @@
-# Android-LocationService
+# Android Location Service
 
-Exploring: Android Location Service implementation using Google Play Service.
+## Android Location Service implementation using Google Play Service.
 
-1.Implementation to fetch the user current loation in foreground and background.<br>
-2.Geo-Fencing Implemenation.
+1.Implementation to fetch the user's current location in foreground using FusedLocationProviderClient  
+2.Implementation to fetch the user's current location in background using FusedLocationProviderClient    
+3.Geo-Fencing Implementation using GeofencingClient.  

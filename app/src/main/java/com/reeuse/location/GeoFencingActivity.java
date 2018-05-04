@@ -1,25 +1,21 @@
 package com.reeuse.location;
 
 import android.Manifest;
-import android.app.PendingIntent;
-import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.Geofence;
-import com.google.android.gms.location.GeofencingRequest;
-import com.google.android.gms.location.LocationServices;
 import com.reeuse.location.geofencing.GeoFenceHelper;
-import com.reeuse.location.geofencing.SetGeofence;
+import com.reeuse.location.geofencing.SetGeoFence;
+import com.reeuse.location.utils.GeoCoordinatesValidatorUtils;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * GeoFencingActivity.java
@@ -28,29 +24,24 @@ import java.util.List;
  */
 
 public class GeoFencingActivity extends AppCompatActivity
-    implements GeoFenceHelper.OnGeofencePreparedListener {
+    implements GeoFenceHelper.GeoFenceStatusListener {
   protected static final String TAG = GeoFencingActivity.class.getSimpleName();
   final private int REQUEST_CODE_ASK_PERMISSIONS = 123;
-  // Internal List of Geofence objects. In a real app, these might be provided by an API based on
+  // Internal List of GeoFence objects. In a real app, these might be provided by an API based on
   // locations within the user's proximity.
-  List<Geofence> mGeofenceList;
+  private List<Geofence> geoFenceList;
   private GeoFenceHelper geoFenceHelper;
+  private TextInputLayout longitudeLabel;
+  private TextInputLayout latitudeLabel;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_geo_fencing);
+    geoFenceList = new ArrayList<>();
 
-    mGeofenceList = new ArrayList<>();
-    SetGeofence setGeofence = new SetGeofence(
-        "12",// geofenceId.
-        13.019780, // latitude
-        80.201202, //longitude
-        100.0f, // radius in meter
-        Geofence.NEVER_EXPIRE,// Expire time
-        Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT
-    );
-    mGeofenceList.add(setGeofence.toGeofence());
+    longitudeLabel = findViewById(R.id.til_latitude);
+    latitudeLabel = findViewById(R.id.til_longitude);
 
     int hasGetLocationPermission = ActivityCompat.checkSelfPermission(GeoFencingActivity.this,
         Manifest.permission.ACCESS_FINE_LOCATION);
@@ -59,39 +50,44 @@ public class GeoFencingActivity extends AppCompatActivity
           new String[] { Manifest.permission.ACCESS_FINE_LOCATION },
           REQUEST_CODE_ASK_PERMISSIONS);
     } else {
-      geoFenceHelper = new GeoFenceHelper(this, this);
+      initializeGeoFencingHelper();
     }
-  }
 
-  private GeofencingRequest getGeofencingRequest() {
-    GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-    builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
-    builder.addGeofences(mGeofenceList);
-    return builder.build();
-  }
-
-  @Override
-  public void onSuccess(GoogleApiClient googleApiClient, PendingIntent pendingIntent) {
-    if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-        == PackageManager.PERMISSION_GRANTED) {
-      LocationServices.getGeofencingClient(this)
-          .addGeofences(getGeofencingRequest(), pendingIntent);
-      Toast.makeText(this, "Geofencing added", Toast.LENGTH_SHORT).show();
-    }
-  }
-
-  @Override
-  public void onError(ConnectionResult connectionResult, String error) {
-    if (connectionResult != null) {
-      if (connectionResult.hasResolution()) {
-        try {
-          connectionResult.startResolutionForResult(this,
-              GeoFenceHelper.CONNECTION_FAILURE_RESOLUTION_REQUEST);
-        } catch (IntentSender.SendIntentException e) {
-          Log.e(TAG, e.getMessage());
-        }
+    findViewById(R.id.bt_set_geo_fence).setOnClickListener(new View.OnClickListener() {
+      @Override public void onClick(View v) {
+        validateAndSetGeoFence();
       }
+    });
+  }
+
+  private void initializeGeoFencingHelper() {
+    geoFenceHelper = new GeoFenceHelper(this, this);
+  }
+
+  private void validateAndSetGeoFence() {
+    String longitude = latitudeLabel.getEditText().getText().toString();
+    String latitude = longitudeLabel.getEditText().getText().toString();
+
+    if (GeoCoordinatesValidatorUtils.isValidLatitude(latitude)) {
+      latitudeLabel.setError(getString(R.string.valid_latitude));
+      return;
     }
+
+    if (GeoCoordinatesValidatorUtils.isValidLongitude(longitude)) {
+      longitudeLabel.setError(getString(R.string.valid_longitude));
+      return;
+    }
+
+    SetGeoFence setGeoFence = new SetGeoFence(
+        randomGeoFenceId(),// geofenceId.
+        Long.parseLong(latitude), // latitude
+        Long.parseLong(longitude), //longitude
+        100f, // radius in meter
+        Geofence.NEVER_EXPIRE,// Expire time
+        Geofence.GEOFENCE_TRANSITION_ENTER | Geofence.GEOFENCE_TRANSITION_EXIT
+    );
+    geoFenceList.add(setGeoFence.toGeoFence());
+    geoFenceHelper.setGeoFencingTriggerOnEnter(geoFenceList);
   }
 
   @Override
@@ -103,8 +99,34 @@ public class GeoFencingActivity extends AppCompatActivity
     }
     if (grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
       // we have permission,
-      geoFenceHelper = new GeoFenceHelper(this, this);
+      initializeGeoFencingHelper();
     }
+  }
+
+  //---------------------------------------------------------//
+
+  private String randomGeoFenceId() {
+    return String.valueOf(new Random().nextInt(1 - 99));
+  }
+
+  private void showToast(String message) {
+    Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+  }
+
+  @Override public void addedSuccessfully() {
+    showToast(getString(R.string.geo_fencing_added_successfully));
+  }
+
+  @Override public void removedSuccessfully() {
+    showToast(getString(R.string.geo_fencing_removed_successfully));
+  }
+
+  @Override public void onAddFail(Exception exception) {
+    showToast(getString(R.string.geo_fencing_add_failed));
+  }
+
+  @Override public void onRemoveFailure(Exception exception) {
+    showToast(getString(R.string.geo_fencing_remove_failed));
   }
 }
 
